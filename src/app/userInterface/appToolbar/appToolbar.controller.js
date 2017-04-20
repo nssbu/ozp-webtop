@@ -437,27 +437,22 @@ angular.module( 'ozpWebtop.appToolbar')
        */
       function addAppToDashboard(app, dashboardId) {
         // check if the app is already on the current dashboard
-        var isOnDashboard = widgetService.isAppOnDashboard(dashboardId, app.id);
-        if (isOnDashboard && app.singleton) {
+        var addErrors = widgetService.addAppToDashboard(app, dashboardId);
+
+        if (addErrors.singleton) {
           $log.warn('WARNING: Only one instance of ' + app.name + ' may be on your dashboard');
-        }
-        else {
-          if(widgetService.overMaxWidgets(dashboardId) === false){
-              widgetService.createFrame(dashboardId, app.id);
-          }
-          else {
-            $modal.open({
-              templateUrl: 'userInterface/appWarningModal/appWarningModal.tpl.html',
-              controller: 'appWarningModal',
-              size: 'md',
-              scope: $scope,
-              resolve: {
-                apps: function() {
-                  return $scope;
-                }
+        } else if(addErrors.maxWidgets) {
+          $modal.open({
+            templateUrl: 'userInterface/appWarningModal/appWarningModal.tpl.html',
+            controller: 'appWarningModal',
+            size: 'md',
+            scope: $scope,
+            resolve: {
+              apps: function() {
+                return $scope;
               }
-            });
-          }
+            }
+          });
         }
       }
 

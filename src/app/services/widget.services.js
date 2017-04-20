@@ -4,7 +4,76 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
     'ozp.common.utilities', 'ozpWebtop.constants', 'ozpWebtop.services.iwcInterface',
     'ozpWebtop.services.restInterface', 'ozpWebtop.models']);
 
-  widgets.factory('widgetService', function($log, $window, Utilities, models, dashboardMaxWidgets, restInterface){
+  widgets.factory('widgetService', function($log, $window, Utilities, iwcConnectedClient, models, dashboardMaxWidgets, restInterface){
+    var _this = this;
+
+    iwcConnectedClient.getClient().then(function(client) {
+        var registrationData = {
+          contentType: 'application/vnd.ozp-iwc-intent-handler-v1+json',
+          entity: {
+            label: 'Webtop\'s open widget'
+          }
+        };
+
+        client.intents()
+          .register('/application/iwc.internal/open', registrationData, openWidget)
+          .catch(function(entity) {
+            var launchData = entity.launchData;
+
+            launchData.openInNewWindow = true;
+            client.system.Reference(entity.applicationId).launch(launchData);
+          });
+
+      function openWidget(data) {
+        var entity = data.entity;
+        var app = { id: entity.applicationId };
+
+        new Promise(function(resolve, reject) {
+          var errors = _this.addAppToDashboard(app);
+
+          if (errors.noDashboard) {
+            reject(entity);
+          } else {
+            resolve(app);
+          }
+        });
+      }
+    });
+
+    this.addAppToDashboard = function addAppToDashboard(app, dashboardId) {
+      var errors = {};
+      var dashboard;
+
+      if (!dashboardId) {
+        dashboard = models.getCurrentDashboard();
+        dashboardId = dashboard && dashboard.id;
+      }
+
+      errors.noDashboard = !dashboardId;
+      errors.singleton = checkIsSingletonOnDashboard(dashboardId, app);
+
+      if (!errors.singleton) {
+        errors.maxWidgets = addNewAppToDashboard(dashboardId, app.id);
+      }
+
+      return errors;
+    };
+
+    function checkIsSingletonOnDashboard(dashboardId, app) {
+      var isOnDashboard = _this.isAppOnDashboard(dashboardId, app.id);
+
+      return isOnDashboard && app.singleton;
+    }
+
+    function addNewAppToDashboard(dashboardId, appId) {
+      var overMaxWidgets = _this.overMaxWidgets(dashboardId);
+
+      if (!overMaxWidgets) {
+        _this.createFrame(dashboardId, appId);
+      }
+
+      return overMaxWidgets;
+    }
 
     this.overMaxWidgets = function(dashboardId){
       var dashboard = models.getDashboardById(dashboardId);

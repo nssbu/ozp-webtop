@@ -14,7 +14,7 @@
     "angular-gridster": "~0.9.11",
     "jquery-ui": "~1.11.0",
     "console-polyfill": "latest",
-    "ozp-iwc": "git+http://dev1.vistronix.com:9080/ozp/ozp-iwc#launch-in-webtop",
+    "ozp-iwc": "aml-development/ozp-iwc",
     "ozp-classification": "git+http://dev1.vistronix.com:9080/ozp/ozp-classification.git",
     "bootstrap": "https://github.com/aml-development/ozp-bootstrap-sass.git#master",
     "ubuntu-fontface": "~0.1.3",

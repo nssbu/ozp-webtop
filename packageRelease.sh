@@ -44,11 +44,16 @@ fi
 BRANCH_NAME=`echo ${BRANCH_NAME}| sed 's,/,_,g'`
 echo "Using branch name: ${BRANCH_NAME}"
 
+# rename DIR to webtop
+cmd="mv ${DIR} webtop"
+echo 'running cmd: ' $cmd
+eval $cmd
+
 # create tarfile
 if [ -z "$VERSION" ]
   then
   	DATETIME=$(date '+%m_%d_%Y-%H_%M')
-  	cmd="tar -czf ${PREFIX}-${BRANCH_NAME}-${DATETIME}.tar.gz ${DIR}/"
+  	cmd="tar -czf ${PREFIX}-${BRANCH_NAME}-${DATETIME}.tar.gz webtop/"
   	echo 'running cmd: ' $cmd
   	eval $cmd
 
@@ -60,7 +65,7 @@ else
   if [ "${BRANCH_VERSION}" == "${VERSION}" ]
   then
     echo "Branch version and package.json version match - OK"
-    cmd="tar -czf ${PREFIX}-${BRANCH_NAME}.tar.gz ${DIR}/"
+    cmd="tar -czf ${PREFIX}-${BRANCH_NAME}.tar.gz webtop/"
     echo 'running cmd: ' $cmd
     eval $cmd
   else

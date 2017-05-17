@@ -278,6 +278,7 @@ angular.module('ozpWebtop.dashboardView.grid')
         return;
       }
       $scope.dashboardId = toParams.dashboardId;
+      models.setCurrentDashboard($scope.dashboardId);
 
       $scope.reloadDashboard();
     };

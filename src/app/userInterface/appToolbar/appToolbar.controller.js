@@ -607,6 +607,14 @@ angular.module( 'ozpWebtop.appToolbar')
       }
     };
 
+    $scope.toggleFrameMinimized = function toggleFrameMinimized(app) {
+      models.toggleFrameKey(app.id, 'isMinimized');
+      $rootScope.$broadcast(dashboardStateChangedEvent, {
+        dashboardId: $scope.currentDashboard.id,
+        layout: $scope.currentDashboard.layout
+      });
+    };
+
     /**
       * @method openHelpModal
       * @param board the changed board object

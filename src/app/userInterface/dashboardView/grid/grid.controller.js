@@ -416,6 +416,7 @@ angular.module('ozpWebtop.dashboardView.grid')
         var addFrame = true;
         for (var l=0; l < originalFrames.length; l++) {
           if (dashboard.frames[k].id === originalFrames[l].id) {
+            angular.merge($scope.frames[l], dashboard.frames[k]);
             addFrame = false;
           }
         }

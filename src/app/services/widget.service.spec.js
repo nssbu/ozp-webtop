@@ -48,7 +48,7 @@ describe('Service: widget', function () {
     models.setApplicationData(appLibraryData);
     var dashboardId = 1;
     var appId = '12345678';
-    var frame = widgets.createFrame(dashboardId, appId);
+    var frame = widgets.createFrame(dashboardId, { id: appId });
     var frameFromBoard = models.getFrameById(frame.id);
     // Check that the frame returned has also been saved in the dashboard
     expect(frame).toEqual(frameFromBoard);

@@ -94,7 +94,7 @@ app.controller('UrlWidgetLauncherCtrl',
           models.setApplicationData(listings);
           // add the apps to the newly minted dashboard
           for (var a=0; a < JSON.parse($scope.widgetArray).length; a++) {
-            widgetService.createFrame($scope.dashboardId, JSON.parse($scope.widgetArray)[a].id);
+            widgetService.createFrame($scope.dashboardId, { id: JSON.parse($scope.widgetArray)[a].id });
           }
 
           // redirect user to new dashboard (grid view by default)
@@ -126,7 +126,7 @@ app.controller('UrlWidgetLauncherCtrl',
         dashboard = models.getDashboards()[0];
       }
       // redirect user to this dashboard after adding this app to the board
-      widgetService.createFrame(dashboard.id, toParams.appId);
+      widgetService.createFrame(dashboard.id, { id: toParams.appId });
       $log.debug('Adding app ' + toParams.appId + ' to existing dashboard ' + dashboard.id + ' and redirecting ...');
       $state.go('dashboardview.' + dashboard.layout + '-sticky-' +
         dashboard.stickyIndex, {dashboardId: dashboard.id});

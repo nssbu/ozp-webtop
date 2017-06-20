@@ -25,9 +25,11 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
         .register('/application/iwc.internal/open', registrationData, openWidget);
     }
 
-    function openWidget(data) {
+    function openWidget(intentData) {
+      var data = intentData.data;
+      var inFlightIntent = intentData.inFlightIntent;
       var entity = data.entity && data.entity.entity;
-      var errors = openWidgetInDashboard(entity.applicationId.replace(/^\/application\//, ''));
+      var errors = openWidgetInDashboard(entity.applicationId.replace(/^\/application\//, ''), inFlightIntent.resource);
 
       if (errors) {
         launchNewWindow(entity);
@@ -36,8 +38,8 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
       }
     }
 
-    function openWidgetInDashboard(applicationId) {
-      var app = { uniqueName: applicationId };
+    function openWidgetInDashboard(applicationId, inFlightIntent) {
+      var app = { inFlightIntent: inFlightIntent, uniqueName: applicationId };
       var errors = _this.addAppToDashboard(app);
 
       return errors.noDashboard;
@@ -73,7 +75,7 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
       errors.singleton = checkIsSingletonOnDashboard(dashboardId, app);
 
       if (!errors.singleton) {
-        errors.maxWidgets = addNewAppToDashboard(dashboardId, app.id, app.uniqueName);
+        errors.maxWidgets = addNewAppToDashboard(dashboardId, app);
       }
 
       return errors;
@@ -85,11 +87,11 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
       return isOnDashboard && app.singleton;
     }
 
-    function addNewAppToDashboard(dashboardId, appId, appUniqueName) {
+    function addNewAppToDashboard(dashboardId, app) {
       var overMaxWidgets = _this.overMaxWidgets(dashboardId);
 
       if (!overMaxWidgets) {
-        _this.createFrame(dashboardId, appId, appUniqueName);
+        _this.createFrame(dashboardId, app);
       }
 
       return overMaxWidgets;
@@ -116,7 +118,7 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
      * @param appId
      * @returns {new frame}
      */
-    this.createFrame = function(dashboardId, appId, appUniqueName) {
+    this.createFrame = function(dashboardId, app) {
       var dashboard = models.getDashboardById(dashboardId);
 
       if(this.overMaxWidgets(dashboardId) === true) {
@@ -171,10 +173,12 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
 
         // get the name for this app (if this app is later deleted, at least
         // we can tell the user what it is called)
+        var appId = app.id;
+        var appUniqueName = app.uniqueName;
         var appName = 'unknown';
         var applicationData = models.getApplicationData();
         for (var a=0; a < applicationData.length; a++) {
-          if (applicationData[a].id === appId || (applicationData[a].uniqueName && applicationData[a].uniqueName === appUniqueName)) {
+          if (applicationData[a].id === app || (applicationData[a].uniqueName && applicationData[a].uniqueName === appUniqueName)) {
             appId = applicationData[a].id;
             appName = applicationData[a].name;
           }
@@ -204,6 +208,10 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
             'height': height
           }
         };
+
+        if (app.inFlightIntent) {
+          newApp.inFlightIntent = app.inFlightIntent;
+        }
 
         dashboard.frames.push(newApp);
         models.saveDashboard(dashboard);

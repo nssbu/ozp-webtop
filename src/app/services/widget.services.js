@@ -26,9 +26,9 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
     }
 
     function openWidget(intentData) {
-      var data = intentData.data;
-      var inFlightIntent = intentData.inFlightIntent;
-      var entity = data.entity && data.entity.entity;
+      var data = intentData.entity.data;
+      var inFlightIntent = intentData.entity.inFlightIntent;
+      var entity = data.entity;
       var errors = openWidgetInDashboard(entity.applicationId.replace(/^\/application\//, ''), inFlightIntent.resource);
 
       if (errors) {

@@ -370,6 +370,11 @@ models.factory('models', function($sce, $q, $log, $http, $window, useIwc,
             frames[j].url = marketplaceApps[i].launchUrls.default;
             var utils = new Utilities();
             var newUrl = utils.updateQueryString('ozpIwc.peer', $window.OzoneConfig.IWC_URL, frames[j].url);
+
+            if (marketplaceApps[i].inFlightIntent) {
+              newUrl = utils.updateQueryString('ozpIwc.inFlightIntent', marketplaceApps[i].inFlightIntent, newUrl);
+            }
+
             frames[j].trustedUrl = $sce.trustAsResourceUrl(newUrl);
             frames[j].name = marketplaceApps[i].name;
             frames[j].descriptionShort = marketplaceApps[i].descriptionShort;

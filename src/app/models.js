@@ -371,8 +371,8 @@ models.factory('models', function($sce, $q, $log, $http, $window, useIwc,
             var utils = new Utilities();
             var newUrl = utils.updateQueryString('ozpIwc.peer', $window.OzoneConfig.IWC_URL, frames[j].url);
 
-            if (marketplaceApps[i].inFlightIntent) {
-              newUrl = utils.updateQueryString('ozpIwc.inFlightIntent', marketplaceApps[i].inFlightIntent, newUrl);
+            if (frames[j].inFlightIntent) {
+              newUrl = utils.updateQueryString('ozpIwc.inFlightIntent', frames[j].inFlightIntent, newUrl);
             }
 
             frames[j].trustedUrl = $sce.trustAsResourceUrl(newUrl);

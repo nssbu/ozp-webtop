@@ -134,8 +134,8 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
         var zIndex = 0;
         var top = 75;
         var left = 75;
-        var width = 250;
-        var height = 250;
+        var width = 500;
+        var height = 500;
 
         var MaxArray = [];
         MaxArray.max =  function(){

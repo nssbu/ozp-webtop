@@ -16,7 +16,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh '''
-                  npm install -g bower grunt-cli
+                  sudo npm install -g bower grunt-cli
                   npm install; npm run bower; npm run build; npm run compile; npm run tarDevDate
                   mv *.tar.gz webtop.tar.gz
                 '''

@@ -72,7 +72,7 @@ models.factory('models', function($sce, $q, $log, $http, $window, useIwc,
       }
       var apps = [];
       for (var i=0; i < applicationData.length; i++) {
-        // TODO: get shortDescription, state, type from backend
+        // TODO: get shortDescription, state, type, & singleton from backend
         apps.push({
           description: 'Description',
           descriptionShort: 'Short description',
@@ -90,7 +90,7 @@ models.factory('models', function($sce, $q, $log, $http, $window, useIwc,
           uiHints: {
             width: 200,
             height: 200,
-            singleton: false
+            singleton: true  //Temporary fix because currently the singleton value is not getting pulled in from widget registration. This value should come from the app's definition.
           },
           uniqueName: applicationData[i].listing.unique_name
         });

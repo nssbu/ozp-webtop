@@ -29,7 +29,7 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
       var data = intentData.entity.data;
       var inFlightIntent = intentData.entity.inFlightIntent;
       var entity = data.entity;
-      var errors = openWidgetInDashboard(entity.applicationId.replace(/^\/application\//, ''), inFlightIntent.resource);
+      var errors = openWidgetInDashboard(entity.id, entity.applicationId.replace(/^\/application\//, ''), inFlightIntent.resource);
 
       if (errors) {
         launchNewWindow(entity);
@@ -38,8 +38,18 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
       }
     }
 
-    function openWidgetInDashboard(applicationId, inFlightIntent) {
-      var app = { inFlightIntent: inFlightIntent, uniqueName: applicationId };
+    function openWidgetInDashboard(appId,applicationId, inFlightIntent) {
+    	//TODO this app variable should needs to get the actual information about the app. Needs to be brought in from the list of all the apps.
+      var app = { 
+    		  inFlightIntent: inFlightIntent, 
+    		  uniqueName: applicationId, 
+    		  id: appId,
+    		  uiHints: {
+    	            width: 200,
+    	            height: 200,
+    	            singleton: true
+    	          }   
+      };
       var errors = _this.addAppToDashboard(app);
 
       return errors.noDashboard;
@@ -84,7 +94,8 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
     function checkIsSingletonOnDashboard(dashboardId, app) {
       var isOnDashboard = _this.isAppOnDashboard(dashboardId, app.id);
 
-      return isOnDashboard && app.singleton;
+    //  return isOnDashboard && app.singleton;
+      return isOnDashboard && app.uiHints.singleton; // app's singleton value in stored in uiHints currently.
     }
 
     function addNewAppToDashboard(dashboardId, app) {

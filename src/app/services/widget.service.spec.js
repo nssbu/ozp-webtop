@@ -1,254 +1,93 @@
 'use strict';
 
-var widgets = angular.module('ozpWebtop.services.widgets',[
-    'ozp.common.utilities', 'ozpWebtop.constants', 'ozpWebtop.services.iwcInterface',
-    'ozpWebtop.services.restInterface', 'ozpWebtop.models']);
+describe('Service: widget', function () {
 
-  widgets.factory('widgetService', function($log, $rootScope, $window, Utilities, iwcConnectedClient, models, dashboardStateChangedEvent, dashboardMaxWidgets, restInterface){
-    var _this = this;
-    var client;
-
-    iwcConnectedClient.getClient().then(function(_client) {
-      client = _client;
-      registerInternalOpen();
+  beforeEach(function() {
+    angular.mock.module('ozpWebtop.models', function($provide) {
+      $provide.constant('useIwc', false);
     });
+  });
 
-    function registerInternalOpen() {
-      var registrationData = {
-        contentType: 'application/vnd.ozp-iwc-intent-handler-v1+json',
-        entity: {
-          label: 'Webtop\'s open widget'
-        }
-      };
+  // load the service's module
+  beforeEach(module('ozpWebtop.models'));
+  beforeEach(module('ozpWebtop.services.widgets'));
 
-      client.intents()
-        .register('/application/iwc.internal/open', registrationData, openWidget);
-    }
+  // Dashboards service
+  var models, appLibraryData, rootScope, $httpBackend, $window, $interval, widgets;
 
-    function openWidget(intentData) {
-      var data = intentData.entity.data;
-      var inFlightIntent = intentData.entity.inFlightIntent;
-      var entity = data.entity;
-      var errors = openWidgetInDashboard(entity.id, entity.applicationId.replace(/^\/application\//, ''), inFlightIntent.resource);
+  beforeEach(inject(function ($rootScope, _models_, _$httpBackend_, _$window_, _$interval_, _widgetService_) {
 
-      if (errors) {
-        launchNewWindow(entity);
-      } else {
-        broadcastDashboardChanged();
-      }
-    }
+    rootScope = $rootScope.$new();
 
-    function openWidgetInDashboard(appId,applicationId, inFlightIntent) {
-    	//TODO this app variable should needs to get the actual information about the app. Needs to be brought in from the list of all the apps.
-      var app = { 
-    		  inFlightIntent: inFlightIntent, 
-    		  uniqueName: applicationId, 
-    		  id: appId,
-    		  uiHints: {
-    	            width: 200,
-    	            height: 200,
-    	            singleton: true
-    	          }   
-      };
-      var errors = _this.addAppToDashboard(app);
+    models = _models_;
 
-      return errors.noDashboard;
-    }
+    $httpBackend = _$httpBackend_;
 
-    function broadcastDashboardChanged() {
-      var currentDashboard = models.getCurrentDashboard();
+    $window = _$window_;
 
-      $rootScope.$broadcast(dashboardStateChangedEvent, {
-        dashboardId: currentDashboard.id,
-        layout: currentDashboard.layout
-      });
-    }
+    $interval = _$interval_;
 
-    function launchNewWindow(entity) {
-      var launchData = entity.launchData;
-      var ref = new client.system.Reference(entity.applicationId);
+    widgets = _widgetService_;
 
-      launchData.openInNewWindow = true;
-      ref.launch(launchData);
-    }
+    $httpBackend.when('PUT', $window.OzoneConfig.API_URL + '/api/self/data/dashboard-data/')
+                            .respond({});
 
-    this.addAppToDashboard = function addAppToDashboard(app, dashboardId) {
-      var errors = {};
-      var dashboard;
+    jasmine.getJSONFixtures().fixturesPath='base/testData';
 
-      if (!dashboardId) {
-        dashboard = models.getCurrentDashboard();
-        dashboardId = dashboard && dashboard.id;
-      }
+    var webtopData = getJSONFixture('WebtopData.json');
+    models.setInitialWebtopData(webtopData);
+    appLibraryData = getJSONFixture('ApplicationLibrary.json');
 
-      errors.noDashboard = !dashboardId;
-      errors.singleton = checkIsSingletonOnDashboard(dashboardId, app);
+  }));
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  //                      Data creation
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-      if (!errors.singleton) {
-        errors.maxWidgets = addNewAppToDashboard(dashboardId, app);
-      }
+  it('should have a createFrame method', function() {
+    // need application data set for this test
+    models.setApplicationData(appLibraryData);
+    var dashboardId = 1;
+    var appId = '12345678';
+    var frame = widgets.createFrame(dashboardId, { id: appId });
+    var frameFromBoard = models.getFrameById(frame.id);
+    // Check that the frame returned has also been saved in the dashboard
+    expect(frame).toEqual(frameFromBoard);
+    // Generated frameId should be a uuid
+    var re = /\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/;
+    expect(frame.id.match(re)).not.toBeNull();
 
-      return errors;
-    };
+    expect(frame.appId).toEqual(appId);
+    // TODO: test this better - row should be one greater than the currently
+    // used row
+    // expect(frame.gridLayout.sm.row).toEqual(5);
+    expect(frame.gridLayout.sm.col).toEqual(0);
+    expect(frame.gridLayout.sm.sizeX).toEqual(3);
+    expect(frame.gridLayout.sm.sizeY).toEqual(1);
 
-    function checkIsSingletonOnDashboard(dashboardId, app) {
-      var isOnDashboard = _this.isAppOnDashboard(dashboardId, app.id);
+    // expect(frame.gridLayout.md.row).toEqual(4);
+    expect(frame.gridLayout.md.col).toEqual(0);
+    expect(frame.gridLayout.md.sizeX).toEqual(2);
+    expect(frame.gridLayout.md.sizeY).toEqual(2);
 
-    //  return isOnDashboard && app.singleton;
-      return isOnDashboard && app.uiHints.singleton; // app's singleton value in stored in uiHints currently.
-    }
+    // Nothing special about these values, just what they happen to be right now
+    expect(frame.desktopLayout.zIndex).toBeGreaterThan(0);
+    expect(frame.desktopLayout.top >= 75).toBeTruthy();
+    expect(frame.desktopLayout.left >= 75).toBeTruthy();
+    expect(frame.desktopLayout.width).toEqual(500);
+    expect(frame.desktopLayout.height).toEqual(500);
+  });
 
-    function addNewAppToDashboard(dashboardId, app) {
-      var overMaxWidgets = _this.overMaxWidgets(dashboardId);
+  // determine if an application exists in a dashboard
+  it('should have a isAppOnDashboard method', function() {
+    var dashboard = models.getDashboardById(0);
+    var validAppId = dashboard.frames[0].appId;
+    var appFound = widgets.isAppOnDashboard(0, validAppId);
+    expect(appFound).toEqual(true);
+  });
 
-      if (!overMaxWidgets) {
-        _this.createFrame(dashboardId, app);
-      }
+  it('should return false when isAppOnDashboard is given an invalid id', function() {
+    var appFound = widgets.isAppOnDashboard(0, 'nothere');
+    expect(appFound).toEqual(false);
+  });
 
-      return overMaxWidgets;
-    }
-
-    this.overMaxWidgets = function(dashboardId){
-      var dashboard = models.getDashboardById(dashboardId);
-
-      if (dashboardMaxWidgets <= dashboard.frames.length) {
-        // TODO: handle error
-        $log.error('ERROR: cannot add frame, too many widgets');
-        return true;
-      }
-      else {
-        return false;
-      }
-    };
-    /**
-     * Create a new frame in a dashboard for a given application
-     * Creates a frame with with both grid and desktop layout data
-     * Creates frame based on UUID as appId
-     * @method createFrame
-     * @param dashboardId
-     * @param appId
-     * @returns {new frame}
-     */
-    this.createFrame = function(dashboardId, app) {
-      var dashboard = models.getDashboardById(dashboardId);
-
-      if(this.overMaxWidgets(dashboardId) === true) {
-        return null;
-      }
-      else {
-        // by default, new frames will have minimal size
-        var col = 0;
-        var sizeX = 2;
-        var sizeY = 2;
-
-        // for the desktop layout, just put it on and let the user move it
-        var zIndex = 0;
-        var top = 75;
-        var left = 75;
-        var width = 500;
-        var height = 500;
-
-        var MaxArray = [];
-        MaxArray.max =  function(){
-          return Math.max.apply(null, this);
-        };
-
-        // empty arrays built every time createFrame is called
-        var maxTopArray = MaxArray;
-        var maxLeftArray = MaxArray;
-        var maxZindexArray = MaxArray;
-
-        // loop through and populate arrays with the top, left, and zindex of all frames
-        for(var frame in dashboard.frames){
-          if(dashboard.frames.length > 0){
-            if(dashboard.frames[frame].desktopLayout){
-              maxTopArray.push(dashboard.frames[frame].desktopLayout.top);
-              maxLeftArray.push(dashboard.frames[frame].desktopLayout.left);
-              maxZindexArray.push(dashboard.frames[frame].desktopLayout.zIndex);
-            }
-          }
-        }
-
-        // set the top, left, and zindex based on the maximum values on screen
-        if (maxTopArray.length > 0){
-          top = maxTopArray.max() + 32;
-        }
-        if (maxLeftArray.length > 0){
-          left = maxLeftArray.max() + 32;
-        }
-        if (maxZindexArray.length > 0){
-          zIndex = maxZindexArray.max() + 10;
-        }
-        var utils = new Utilities();
-        var frameId = utils.generateUuid();
-
-        // get the name for this app (if this app is later deleted, at least
-        // we can tell the user what it is called)
-        var appId = app.id;
-        var appUniqueName = app.uniqueName;
-        var appName = 'unknown';
-        var applicationData = models.getApplicationData();
-        for (var a=0; a < applicationData.length; a++) {
-          if (applicationData[a].id === app || (applicationData[a].uniqueName && applicationData[a].uniqueName === appUniqueName)) {
-            appId = applicationData[a].id;
-            appName = applicationData[a].name;
-          }
-        }
-        // update the dashboard with this app
-        var newApp = {
-          'appId': appId,
-          'id': frameId,
-          'name': appName,
-          'gridLayout': {
-            'sm': {
-              'col': col,
-              'sizeX': 3,
-              'sizeY': 1
-            },
-            'md': {
-              'col': col,
-              'sizeX': sizeX,
-              'sizeY': sizeY
-            }
-          },
-          'desktopLayout': {
-            'zIndex': zIndex,
-            'top': top,
-            'left': left,
-            'width': width,
-            'height': height
-          }
-        };
-
-        if (app.inFlightIntent) {
-          newApp.inFlightIntent = app.inFlightIntent;
-        }
-
-        dashboard.frames.push(newApp);
-        models.saveDashboard(dashboard);
-        return newApp;
-      }
-    };
-    /**
-     * Check to see if an application is already on a given dashboard
-     * @method isAppOnDashboard
-     * @param dashboardId
-     * @param applicationId
-     * @returns {Promise}
-     */
-    this.isAppOnDashboard = function(dashboardId, applicationId) {
-      var dashboard = models.getDashboardById(dashboardId);
-      for (var i=0; i < dashboard.frames.length; i++) {
-        if (dashboard.frames[i].appId === applicationId) {
-          return true;
-        }
-      }
-      return false;
-    };
-
-    this.bookmarkWidget = function(widgetId) {
-      return restInterface.createLibraryEntry(widgetId);
-    };
-
-    return this;
 });

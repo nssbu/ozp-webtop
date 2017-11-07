@@ -90,7 +90,7 @@ models.factory('models', function($sce, $q, $log, $http, $window, useIwc,
           uiHints: {
             width: 200,
             height: 200,
-            singleton: false
+            singleton: true
           },
           uniqueName: applicationData[i].listing.unique_name
         });

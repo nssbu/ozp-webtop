@@ -29,7 +29,7 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
       var data = intentData.entity.data;
       var inFlightIntent = intentData.entity.inFlightIntent;
       var entity = data.entity;
-      var errors = openWidgetInDashboard(entity.applicationId.replace(/^\/application\//, ''), inFlightIntent.resource);
+      var errors = openWidgetInDashboard(entity.id, entity.applicationId.replace(/^\/application\//, ''), inFlightIntent.resource);
 
       if (errors) {
         launchNewWindow(entity);
@@ -38,8 +38,17 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
       }
     }
 
-    function openWidgetInDashboard(applicationId, inFlightIntent) {
-      var app = { inFlightIntent: inFlightIntent, uniqueName: applicationId };
+    function openWidgetInDashboard(id, applicationId, inFlightIntent) {
+      var app = {
+        inFlightIntent: inFlightIntent,
+        uniqueName: applicationId,
+        id: id,
+          uiHints: {
+            width: 200,
+            height: 200,
+            singleton: true
+          }
+      };
       var errors = _this.addAppToDashboard(app);
 
       return errors.noDashboard;
@@ -84,7 +93,7 @@ var widgets = angular.module('ozpWebtop.services.widgets',[
     function checkIsSingletonOnDashboard(dashboardId, app) {
       var isOnDashboard = _this.isAppOnDashboard(dashboardId, app.id);
 
-      return isOnDashboard && app.singleton;
+      return isOnDashboard && app.uiHints.singleton;
     }
 
     function addNewAppToDashboard(dashboardId, app) {

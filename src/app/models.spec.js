@@ -497,7 +497,7 @@ describe('Service: models', function () {
     // now set it with real data
     models.setApplicationData(appLibraryData);
     var firstApp = models.getApplicationData()[0];
-    expect(firstApp.uiHints.singleton).toEqual(true);
+    expect(firstApp.uiHints.singleton).toEqual(true); //Singleton will default to true 
   });
 
 });
